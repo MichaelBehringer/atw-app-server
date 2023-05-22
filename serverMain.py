@@ -77,6 +77,20 @@ def getPers():
     response = jsonify(pers)
     return response
 
+@app.route('/persExtra', methods = ['GET'])
+@cross_origin()
+def getPersExtra():
+    conn = createConnection()
+    cur = executeSQL(conn, "select p.PERS_NO, p.FIRSTNAME, p.LASTNAME, p.USERNAME, f.FUNCTION_NO, f.FUNCTION_NAME, ac.CITY_NO, ac.CITY_NAME from pers p inner join atemschutzpflegestelle_cities ac on p.city_no = ac.CITY_NO inner join function f on p.FUNCTION_NO = f.FUNCTION_NO where p.IS_ACTIVE=1 order by p.LASTNAME")
+    persTupel = cur.fetchall()
+    destroyConnection(conn)
+    pers = []
+    for val in persTupel:
+        pers.append({'persNo': val[0], 'firstname': val[1], 'lastname': val[2], 'username': val[3], 'functionNo': val[4], 'functionName': val[5], 'cityNo': val[6], 'cityName': val[7]})
+
+    response = jsonify(pers)
+    return response
+
 @app.route('/cities', methods = ['GET'])
 @cross_origin()
 def getCities():
@@ -87,6 +101,20 @@ def getCities():
     pers = []
     for val in persTupel:
         pers.append({'cityNo': val[0], 'name': val[1]})
+
+    response = jsonify(pers)
+    return response
+
+@app.route('/function', methods = ['GET'])
+@cross_origin()
+def getFunction():
+    conn = createConnection()
+    cur = executeSQL(conn, "select FUNCTION_NO, FUNCTION_NAME from function order by FUNCTION_NO")
+    persTupel = cur.fetchall()
+    destroyConnection(conn)
+    pers = []
+    for val in persTupel:
+        pers.append({'functionNo': val[0], 'functionName': val[1]})
 
     response = jsonify(pers)
     return response
