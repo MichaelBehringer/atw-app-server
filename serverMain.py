@@ -1,13 +1,20 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS, cross_origin
 from waitress import serve
 from database import *
+from flask_jwt_extended import create_access_token, unset_jwt_cookies, jwt_required, JWTManager, get_jwt_identity
+import time
 
 
 
+# app = Flask(__name__, static_folder="build/static", template_folder="build")
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.config["JWT_SECRET_KEY"] = "ffwemdingATW"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
+jwt = JWTManager(app)
+
 
 def getDbString(jsonStr, key):
     val = jsonStr.get(key)
@@ -16,6 +23,45 @@ def getDbString(jsonStr, key):
     else:
         return val
 
+# @app.route("/")
+# def hello():
+#     return render_template('index.html')
+
+@app.route('/token', methods=["POST"])
+def create_token():
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    # Encode PW sha256
+    #encodedPW = sha256(password.encode('utf-8')).hexdigest()
+    conn1 = createConnection()
+    # IF count > 0 -> User is allowed
+    count = executeSQL(conn1, "SELECT COUNT(*) FROM pers WHERE USERNAME=? AND PASSWORD=?", username, password).fetchone()[0]
+    conn1.close()
+    if (count == 0):
+        return {"msg": "Wrong username or password"}, 401
+
+    access_token = create_access_token(identity=username)
+    response = {"access_token":access_token, }
+    return response
+
+# Logout user from system
+@app.route("/logout", methods=["POST"])
+def logout():
+    response = jsonify({"msg": "logout successful"})
+    # Invalid JWT
+    unset_jwt_cookies(response)
+    return response
+
+@app.route("/loggedUser", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    conn = createConnection()
+    userDataDB = executeSQL(conn, "SELECT PERS_NO, FUNCTION_NO FROM pers WHERE USERNAME=?", current_user).fetchone()
+    conn.close()
+
+    return jsonify({'persNo': userDataDB[0], 'functionNo': userDataDB[1]})
 
 @app.route('/pers', methods = ['GET'])
 @cross_origin()
