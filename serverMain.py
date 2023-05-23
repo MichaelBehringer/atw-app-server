@@ -197,10 +197,28 @@ def updateUser():
     jsonStr = request.json
 
     conn = createConnection()
-    sql = "UPDATE pers SET FIRSTNAME = ?, LASTNAME = ? where PERS_NO = ?"
-    executeSQL(conn, sql, jsonStr.get("firstname"), jsonStr.get("lastname"), jsonStr.get("key"))
+    sql = "UPDATE pers SET FIRSTNAME = ?, LASTNAME = ?, FUNCTION_NO = ?, CITY_NO = ?, USERNAME = ? where PERS_NO = ?"
+    executeSQL(conn, sql, jsonStr.get("firstname"), jsonStr.get("lastname"), jsonStr.get("functionNo"), jsonStr.get("cityNo"), jsonStr.get("username"), jsonStr.get("key"))
     conn.commit()
     conn.close()
+    return jsonify(1)
+
+@app.route('/createUser',  methods = ['PUT'])
+@cross_origin()
+def createUser():
+    jsonStr = request.json
+
+    conn1 = createConnection()
+    count = executeSQL(conn1, "SELECT COUNT(*) FROM pers WHERE lower(USERNAME)=lower(?)", jsonStr.get("username")).fetchone()[0]
+    conn1.close()
+    if (count != 0):
+        return {"msg": "Username already taken"}, 201
+
+    conn2 = createConnection()
+    sql = "INSERT INTO pers (FIRSTNAME, LASTNAME, USERNAME, PASSWORD, FUNCTION_NO, CITY_NO, IS_ACTIVE) VALUES(?,?,?,?,?,?,1)"
+    executeSQL(conn2, sql, jsonStr.get("firstname"), jsonStr.get("lastname"), jsonStr.get("username"), jsonStr.get("password"), jsonStr.get("functionNo"), jsonStr.get("cityNo"))
+    conn2.commit()
+    conn2.close()
     return jsonify(1)
 
 @app.route('/deleteUser',  methods = ['DELETE'])
