@@ -5,6 +5,10 @@ type Login struct {
 	Password string `json:"password"`
 }
 
+type ResponseText struct {
+	Reason string `json:"reason"`
+}
+
 type AcessToken struct {
 	AccessToken string `json:"accessToken"`
 }

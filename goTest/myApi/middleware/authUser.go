@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	. "myApi_go/controller"
+	. "myApi_go/models"
 	"net/http"
 	"strings"
 
@@ -21,14 +22,19 @@ func AuthUser() gin.HandlerFunc {
 		fmt.Printf(h.IDToken)
 		fmt.Printf("post")
 		idTokenHeader := strings.Split(h.IDToken, "Bearer ")
+		fmt.Printf("\n\n%v", len(idTokenHeader))
+
 		if len(idTokenHeader) < 2 {
-			c.AbortWithStatus(http.StatusBadRequest)
+			fmt.Printf("drinnen")
+			c.AbortWithStatusJSON(http.StatusBadRequest, ResponseText{Reason: "kein Token"})
+			return
 		}
 		isAllowed, _ := ParseToken(idTokenHeader[1])
 		if isAllowed {
 			c.Next()
 		} else {
 			c.AbortWithStatus(http.StatusBadRequest)
+			return
 		}
 	}
 }
